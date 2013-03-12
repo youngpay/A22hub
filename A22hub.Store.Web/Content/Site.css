@@ -1,0 +1,220 @@
+﻿body {
+    font-size: 14px;
+    font-family: "Segoe UI", Verdana, Helvetica, Sans-Serif;
+    color: #232323;
+    background-color: #fff;
+    margin-top: 45px;
+}
+
+header, footer, nav, section {
+    display: block;
+}
+
+div.main {
+    width: 96%;
+    margin: 0 auto;
+}
+
+.button {
+    display: inline-block;
+    white-space: nowrap;
+    background-color: #ccc;
+    background-image: -webkit-gradient(linear, left top, left bottom, from(#eee), to(#ccc));
+    background-image: -webkit-linear-gradient(top, #eee, #ccc);
+    background-image: -moz-linear-gradient(top, #eee, #ccc);
+    background-image: -ms-linear-gradient(top, #eee, #ccc);
+    background-image: -o-linear-gradient(top, #eee, #ccc);
+    background-image: linear-gradient(top, #eee, #ccc);
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorStr='#eeeeee', EndColorStr='#cccccc');
+    border: 1px solid #777;
+    padding: 0 1.5em;
+    margin: 0.5em;
+    font: bold 1em/2em Arial, Helvetica;
+    text-decoration: none;
+    color: #333;
+    text-shadow: 0 1px 0 rgba(255,255,255,.8);
+    -moz-border-radius: .2em;
+    -webkit-border-radius: .2em;
+    border-radius: .2em;
+    -moz-box-shadow: 0 0 1px 1px rgba(255,255,255,.8) inset, 0 1px 0 rgba(0,0,0,.3);
+    -webkit-box-shadow: 0 0 1px 1px rgba(255,255,255,.8) inset, 0 1px 0 rgba(0,0,0,.3);
+    box-shadow: 0 0 1px 1px rgba(255,255,255,.8) inset, 0 1px 0 rgba(0,0,0,.3);
+}
+
+    .button:hover {
+    text-decoration: none;
+        background-color: #ddd;
+        background-image: -webkit-gradient(linear, left top, left bottom, from(#fafafa), to(#ddd));
+        background-image: -webkit-linear-gradient(top, #fafafa, #ddd);
+        background-image: -moz-linear-gradient(top, #fafafa, #ddd);
+        background-image: -ms-linear-gradient(top, #fafafa, #ddd);
+        background-image: -o-linear-gradient(top, #fafafa, #ddd);
+        background-image: linear-gradient(top, #fafafa, #ddd);
+        filter: progid:DXImageTransform.Microsoft.gradient(startColorStr='#fafafa', EndColorStr='#dddddd');
+    }
+
+    .button:active {
+        -moz-box-shadow: 0 0 4px 2px rgba(0,0,0,.3) inset;
+        -webkit-box-shadow: 0 0 4px 2px rgba(0,0,0,.3) inset;
+        box-shadow: 0 0 4px 2px rgba(0,0,0,.3) inset;
+        position: relative;
+        top: 1px;
+    }
+
+    .button:focus {
+        outline: 0;
+        background: #fafafa;
+    }
+
+    .button:before {
+        background: #ccc;
+        background: rgba(0,0,0,.1);
+        float: left;
+        width: 1em;
+        text-align: center;
+        font-size: 1.5em;
+        margin: 0 1em 0 -1em;
+        padding: 0 .2em;
+        -moz-box-shadow: 1px 0 0 rgba(0,0,0,.5), 2px 0 0 rgba(255,255,255,.5);
+        -webkit-box-shadow: 1px 0 0 rgba(0,0,0,.5), 2px 0 0 rgba(255,255,255,.5);
+        box-shadow: 1px 0 0 rgba(0,0,0,.5), 2px 0 0 rgba(255,255,255,.5);
+        -moz-border-radius: .15em 0 0 .15em;
+        -webkit-border-radius: .15em 0 0 .15em;
+        border-radius: .15em 0 0 .15em;
+        pointer-events: none;
+    }
+
+/* Hexadecimal entities for the icons */
+
+.add:before {
+    content: "\271A";
+}
+
+.edit:before {
+    content: "\270E";
+}
+
+.delete:before {
+    content: "\2718";
+}
+
+.save:before {
+    content: "\2714";
+}
+
+.email:before {
+    content: "\2709";
+}
+
+.like:before {
+    content: "\2764";
+}
+
+.next:before {
+    content: "\279C";
+}
+
+.star:before {
+    content: "\2605";
+}
+
+.spark:before {
+    content: "\2737";
+}
+
+.play:before {
+    content: "\25B6";
+}
+/* Buttons and inputs */
+button.button, input.button {
+    cursor: pointer;
+    overflow: visible; /* removes extra side spacing in IE */
+}
+
+/* removes extra inner spacing in Firefox */
+button::-moz-focus-inner {
+    border: 0;
+    padding: 0;
+}
+
+/* If line-height can't be modified, then fix Firefox spacing with padding */
+input::-moz-focus-inner {
+    padding: .4em;
+}
+
+/* The disabled styles */
+.button[disabled], .button[disabled]:hover, .button.disabled, .button.disabled:hover {
+    background: #eee;
+    color: #aaa;
+    border-color: #aaa;
+    cursor: default;
+    text-shadow: none;
+    position: static;
+    -moz-box-shadow: none;
+    -webkit-box-shadow: none;
+    box-shadow: none;
+}
+
+.navbar-form .input-prepend {
+    margin-bottom: 0;
+}
+
+.navbar-form .input-append {
+    margin-bottom: 0;
+}
+
+
+
+.breadcrumb {
+    padding: 7px 14px;
+    margin: 0 0 18px;
+    background-color: #fbfbfb;
+    background-image: -moz-linear-gradient(top, #ffffff, #f5f5f5);
+    background-image: -ms-linear-gradient(top, #ffffff, #f5f5f5);
+    background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#ffffff), to(#f5f5f5));
+    background-image: -webkit-linear-gradient(top, #ffffff, #f5f5f5);
+    background-image: -o-linear-gradient(top, #ffffff, #f5f5f5);
+    background-image: linear-gradient(to bottom, #ffffff, #f5f5f5);
+    background-repeat: repeat-x;
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffff', endColorstr='#f5f5f5', GradientType=0);
+    border: 1px solid #ddd;
+    -webkit-border-radius: 3px;
+    -moz-border-radius: 3px;
+    border-radius: 3px;
+    -webkit-box-shadow: inset 0 1px 0 #ffffff;
+    -moz-box-shadow: inset 0 1px 0 #ffffff;
+    box-shadow: inset 0 1px 0 #ffffff;
+}
+
+    .breadcrumb li {
+        display: inline-block;
+        text-shadow: 0 1px 0 #ffffff;
+    }
+
+    .breadcrumb .divider {
+        padding: 0 5px;
+        color: #999999;
+    }
+
+    .breadcrumb .active a {
+        color: #333333;
+    }
+
+img.store-icon {
+    margin: 0 auto;
+    display: block;
+    width: 80px;
+    height: 80px;
+    cursor: pointer;
+}
+div.highlight:hover {
+    -moz-box-shadow: 1px 1px 5px 1px #000;
+    -webkit-box-shadow:1px 1px 5px 1px #000;
+    box-shadow: 1px 1px 5px 1px #000;
+}
+
+#myWindow .modal-body{ max-height:900px!important;}
+
+@media (max-width:979px) {
+    body{margin-top:0!important;}
+}

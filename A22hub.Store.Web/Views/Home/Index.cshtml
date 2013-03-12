@@ -1,0 +1,15 @@
+﻿@{
+    ViewBag.Title = "Store";
+}
+
+<div class="hero-unit">
+    <h1>A2208Hub.Store</h1>
+    <p>文件管理</p>
+</div>
+@section js
+{
+    @if (Request.QueryString["error"] != null)
+    {
+        <script>app.alert(decodeURI('@Request.QueryString["error"]'));</script>
+    }
+}

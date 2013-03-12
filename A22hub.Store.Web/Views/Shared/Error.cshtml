@@ -1,0 +1,64 @@
+﻿@{
+    Layout = null;
+}
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewBag.Error | A2208Hub</title>
+    <style>
+        body {
+            font-family: 'Microsoft JhengHei';
+        }
+
+        h1 {
+            color: #000;
+            text-shadow: 0 1px 1px #000;
+        }
+
+        pre {
+            color: #000;
+            font-family: 'Microsoft JhengHei';
+            font-size: 14px;
+        }
+
+        div.bg {
+            width: 90%;
+            background-color: #fff;
+            margin: 0 auto;
+            padding: 15px;
+        }
+
+        hr {
+            clear: both;
+            float: none;
+            width: 100%;
+            height: 1px;
+            line-height: 1px;
+            font-size: 0;
+            border: none 0;
+            margin: 1.4em 0;
+            border: none;
+        }
+
+        .sexy_line {
+            display: block;
+            border: none;
+            color: white;
+            height: 1px;
+            background: #ddd;
+            background-image: -webkit-gradient(linear,left bottom,right bottom,color-stop(0, rgb(255,255,255)), color-stop(0.1, rgb(221,221,221)),color-stop(0.9, rgb(221,221,221)),color-stop(1, rgb(255,255,255)));
+            background-image: -webkit-linear-gradient(left center,rgb(255,255,255) 0%,rgb(221,221,221) 10%,rgb(221,221,221) 90%,rgb(255,255,255) 100%);
+            background-image: -moz-linear-gradient(left center,rgb(255,255,255) 0%,rgb(221,221,221) 10%,rgb(221,221,221) 90%,rgb(255,255,255) 100%);
+            background-image: -o-linear-gradient(left center,rgb(255,255,255) 0%,rgb(221,221,221) 10%,rgb(221,221,221) 90%,rgb(255,255,255) 100%);
+        }
+    </style>
+</head>
+<body>
+    <div class="bg">
+        <h1>@ViewBag.Error
+        <a href="/">返回</a></h1>
+        <span class="sexy_line"></span>
+        <pre>@ViewBag.Detail</pre>
+    </div>
+</body>
+</html>

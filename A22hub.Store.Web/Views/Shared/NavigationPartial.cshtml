@@ -1,0 +1,36 @@
+﻿@*
+    头部包含 导航条
+*@
+<div class="navbar navbar-fixed-top">
+    <div class="navbar-inner">
+        <div class="container">
+			<a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+			    <span class="icon-bar"></span>
+			    <span class="icon-bar"></span>
+			    <span class="icon-bar"></span>
+			</a>
+            <a class="brand" href="@Url.Action("Index", "Home")">A2208Hub.Store</a>
+			<div class="nav-collapse collapse">
+            <ul class="nav">
+                <li @if (ViewBag.Menu == 1){
+                        @:class="active" 
+                }>
+                    <a href="@Url.Action("Index", "File")">文件</a>
+                </li>
+                <li @if (ViewBag.Menu == 2){
+                        @:class="active" 
+                }>
+                    <a href="@Url.Action("Index", "About")">关于</a>
+                </li>
+            </ul>
+                <div class="pull-right">
+                @if (Request.IsAuthenticated == false) {
+                    @Html.Partial("LoginFormPartial")
+                }else {
+                    @Html.Partial("LoginUserStatePartial")
+                }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

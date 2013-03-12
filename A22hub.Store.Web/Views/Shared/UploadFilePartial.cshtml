@@ -1,0 +1,84 @@
+﻿@*
+    上传文件部分视图
+*@
+@model A2208hub.Store.Web.Models.UploadFileViewModel
+
+<div id="drop_zone" class="well">
+    Drop files here
+        <p>&nbsp;</p>
+    <table class="table table-borderd">
+        <tr>
+            <td class="span2">test.docx</td>
+            <td class="span6">
+                <div class="progress progress-striped active">
+                    <div class="bar" style="width: 40%;"></div>
+                </div>
+            </td>
+            <td class="span2">423232B</td>
+        </tr>
+    </table>
+</div>
+<script>
+    function handleFileSelect(evt) {
+        evt.stopPropagation();
+        evt.preventDefault();
+
+        var files = evt.dataTransfer.files;
+
+        for (var i = 0, f; f = files[i]; i++) {
+            uploadFile(f);
+        }
+    }
+
+    function uploadFile(file) {
+        var reader = new FileReader();
+        reader.onloadend = function () {
+            $.post('@Model.UploadUrl',
+                    {
+                        filename: file.name,
+                        source: reader.result
+                    },
+                    function (data) {
+                        console.log(data);
+                    }
+                );
+        }
+        reader.readAsDataURL(file);
+    }
+
+    function handleDragOver(evt) {
+        evt.stopPropagation();
+        evt.preventDefault();
+        evt.dataTransfer.dropEffect = 'copy';
+        $('#drop_zone').text('release to upload');
+    }
+
+    function handleDragLeave(evt) {
+        evt.stopPropagation();
+        evt.preventDefault();
+        $('#drop_zone').text('Drop files here');
+    }
+
+    $(document.body).ready(function () {
+
+        $(document).bind({
+            dragenter: function (e) {
+                e.stopPropagation();
+                e.preventDefault();
+                var dt = e.originalEvent.dataTransfer;
+                dt.effectAllowed = dt.dropEffect = 'none';
+            },
+            dragover: function (e) {
+                e.stopPropagation();
+                e.preventDefault();
+                var dt = e.originalEvent.dataTransfer;
+                dt.effectAllowed = dt.dropEffect = 'none';
+            }
+        });
+
+        var dropZone = document.getElementById('drop_zone');
+        dropZone.addEventListener('dragover', handleDragOver, false);
+        dropZone.addEventListener('dragleave', handleDragLeave, false);
+        dropZone.addEventListener('drop', handleFileSelect, false);
+    });
+</script>

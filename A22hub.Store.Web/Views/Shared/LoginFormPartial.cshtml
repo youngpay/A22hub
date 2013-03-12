@@ -1,0 +1,16 @@
+﻿@*
+    头部包含 登录表单
+*@
+<form id="loginForm" class="navbar-form pull-right" action="@Url.Action("Login", "Home")" onsubmit="return false;" method="post">
+    <div class="input-append input-prepend ">
+        <span class="add-on"><i class="icon-user"></i></span>
+        <input type="text" name="username" class="span1" placeholder="用户名">
+        <span class="add-on"><i class="icon-lock"></i></span>
+        <input type="password" name="password" class="span1" placeholder="密码">
+        <a class="btn" data-toggle="button" href="#" onclick="app.onrememberme(this)">记住我
+            <input id="remember" type="hidden" name="remember" value="0" />
+        </a>
+        <input type="hidden" name="returnurl" value="@Request.QueryString["ReturnUrl"]" />
+        <input name="submit" class="btn" type="submit" onclick="app.onlogin()" data-loading-text="正在载入..." value="登录" />
+    </div>
+</form>
