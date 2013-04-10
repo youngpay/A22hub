@@ -1,6 +1,7 @@
 ﻿using A2208hub.Store.Web.Models;
 using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
 using System.Web;
 using System.Web.Http;
@@ -40,16 +41,19 @@ namespace A2208hub.Store.Web
 
         private void CheckDatabase()
         {
-            if (!Roles.RoleExists("admin"))
+            if (false == Roles.RoleExists("admin"))
             {
                 Roles.CreateRole("admin");
                 Roles.CreateRole("user");
+                Roles.CreateRole("guest");
 
                 Membership.CreateUser("admin", "123");
                 Membership.CreateUser("public", "public");
+                Membership.CreateUser("guest", "guest");
 
                 Roles.AddUserToRole("admin", "admin");
                 Roles.AddUserToRole("public", "user");
+                Roles.AddUserToRole("guest", "guest");
             }
         }
     }

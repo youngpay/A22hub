@@ -5,14 +5,18 @@
     <li class="dropdown">
     <a href="#"
         class="dropdown-toggle"
-        data-toggle="dropdown">@User.Identity.Name
+        data-toggle="dropdown">@(ViewBag.IsAuthenticated != null ? ViewBag.Username : User.Identity.Name)
         <b class="caret"></b>
     </a>
     <ul class="dropdown-menu">
+        @if (ViewBag.Username == null && 
+            (User.IsInRole("admin") || User.IsInRole("user")))
+        {
         <li>
             <a href="#">编辑资料</a>
         </li>
         <li class="divider"></li>
+        }
         <li>
             <a href="#" onclick="app.logout()">退出</a>
         </li>

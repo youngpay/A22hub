@@ -25,17 +25,26 @@
     </div>
 </div>
 
-<div class="modal hide fade" id="myWindow" style="display: none; margin-left:0px; left:10%; width:80%">
+<div class="modal hide fade" id="myWindow" style="display: none; margin-left: 0px; left: 10%; width: 80%">
     <div class="modal-header">
         <a class="close" data-dismiss="modal">×</a>
         <h3></h3>
     </div>
     <div class="modal-body">
-        <div id="myWindow-loading" style="text-align:center; display:none">
+        <div id="myWindow-loading" style="text-align: center; display: none">
             <img src="@Url.Content("~/Content/Images/ajax-loader.gif")" />
         </div>
         <div id="myWindow-content"></div>
     </div>
     <div class="modal-footer">
     </div>
+</div>
+
+<div id="loadingpanel">
+    <div id="loadingmodal">
+    </div>
+<div class="innermodal">
+    <p id="loadingpaneltitle">正在载入</p>
+    <img id="loadingimg" src="@Url.Content("~/Content/Images/ajax-loader.gif")" />
+</div>
 </div>

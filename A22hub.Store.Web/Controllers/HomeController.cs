@@ -2,9 +2,11 @@
 using System.Web.Mvc;
 using System.Web.Security;
 using System.Linq;
+using A2208hub.Store.Web.Filters;
 
 namespace A2208hub.Store.Web.Controllers
 {
+    [IPSafe]
     public class HomeController : Controller
     {
         //
@@ -12,8 +14,6 @@ namespace A2208hub.Store.Web.Controllers
 
         public ActionResult Index()
         {
-            StoreDBContext db = new StoreDBContext();
-            
             return View();
         }
 

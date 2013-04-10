@@ -1,4 +1,5 @@
-﻿using A2208hub.Store.Web.Models;
+﻿using A2208hub.Store.Web.Filters;
+using A2208hub.Store.Web.Models;
 using A2208hub.Store.Web.Tools;
 using System;
 using System.Collections.Generic;
@@ -10,9 +11,11 @@ using System.Web.Security;
 
 namespace A2208hub.Store.Web.Controllers
 {
+    [IPSafe]
     [Authorize]
     public class FileController : Controller
     {
+        private static object obj = new object();
         private StoreDBContext db = new StoreDBContext();
         private static string root = System.Web.Configuration.WebConfigurationManager.AppSettings["DocumentRoot"];
 
@@ -60,9 +63,9 @@ namespace A2208hub.Store.Web.Controllers
             return Json(new AjaxData(items), JsonRequestBehavior.AllowGet);
         }
 
-        public ActionResult Index()
+        public ActionResult Index(string dir = "/")
         {
-            return View();
+            return View(model:dir);
         }
 
         public ActionResult Preview(string dir)
@@ -91,6 +94,7 @@ namespace A2208hub.Store.Web.Controllers
             return File(Path.Combine(root, dir), MimeType.GetTypeName(dir.Substring(dir.LastIndexOf("."))));
         }
 
+        [AllowAnonymous]
         public ActionResult Download(string dir)
         {
             if (string.IsNullOrEmpty(dir))
@@ -132,34 +136,34 @@ namespace A2208hub.Store.Web.Controllers
             return Json(new AjaxData(AjaxStatusCode.OK), JsonRequestBehavior.AllowGet);
         }
 
-        [HttpGet]
-        public ActionResult Upload() 
-        {
-            return View();
-        }
-
-        [AllowAnonymous]
         [HttpPost]
-        public ActionResult Upload(FormCollection fc)
+        public ActionResult Upload()
         {
-            //string base64 = fc["base64"];
-            if (Request.Files.Count == 0)
-                return Json(new AjaxData("参数错误"));
-            string savePath = fc["path"];
-            var file = Request.Files[0];
-
-
-            if (string.IsNullOrEmpty(savePath))
+            var name = Request.Headers["X-File-Path"];
+            var size = long.Parse(Request.Headers["X-File-Size"]);
+            var position = long.Parse(Request.Headers["X-File-Position"]);
+            var stream = Request.InputStream;
+            if (name == null || stream == null)
                 return Json(new AjaxData("参数错误"));
 
-            string path = Path.Combine(root, savePath);
-            if (System.IO.File.Exists(path))
-                return Json(new AjaxData("此文件已存在"));
+            name = Server.UrlDecode(name);
+            name = Path.Combine(root, name);
 
-            file.SaveAs(path);
-            var log = LogHelper.CreateLog("文件上传：" + path);
-            db.FileLogs.Add(log);
-            db.SaveChanges();
+            lock (obj)
+            {
+                using (var fs = new FileStream(name, FileMode.OpenOrCreate))
+                {
+                    byte[] bytes = new byte[stream.Length];
+                    stream.Read(bytes, 0, bytes.Length);
+                    fs.SetLength(size);
+                    fs.Position = position;
+                    fs.Write(bytes, 0, (int)bytes.Length);
+
+                    if (fs.Position == size)
+                        return Json(new AjaxData(data: "done"));
+                }
+            }
+
             return Json(new AjaxData(AjaxStatusCode.OK));
         }
 
@@ -179,6 +183,91 @@ namespace A2208hub.Store.Web.Controllers
             db.FileLogs.Add(log);
             db.SaveChanges();
             return Json(new AjaxData(AjaxStatusCode.OK));
+        }
+
+        public ActionResult Exists(string dir)
+        {
+            if (string.IsNullOrEmpty(dir))
+                return Json(new AjaxData("参数错误"), JsonRequestBehavior.AllowGet);
+            if (System.IO.File.Exists(Path.Combine(root,dir)))
+                return Json(new AjaxData(data: "1"), JsonRequestBehavior.AllowGet);
+            else
+                return Json(new AjaxData(data: "0"), JsonRequestBehavior.AllowGet);
+        }
+
+        [AllowAnonymous]
+        public ActionResult Link(string id)
+        {
+            if (false == Request.IsAuthenticated)
+                FormsAuthentication.SetAuthCookie("guest", false);
+            ViewBag.IsAuthenticated = true;
+            ViewBag.Username = "guest";
+
+            var fileLink = FileRedirectWithGuidFromCache(id);
+            if (fileLink == null)
+                throw new Exception("此链接无效：" + id);
+            if (fileLink.Type == "dir")
+                return View("Index", model: fileLink.Path);
+            else if (fileLink.Type == "file")
+                return RedirectToAction("Download", new { dir = fileLink.Path });
+            else
+                throw new Exception("错误的文件类型：" + fileLink.Type);
+        }
+
+        private FileLink FileRedirectWithGuidFromCache(string guid)
+        {
+            var cacheKey = string.Format("FileController.FileRedirectWithGuidFromCache({0})", guid);
+
+            var cache = HttpRuntime.Cache[cacheKey] as FileLink;
+            if (cache == null)
+            {
+                var query = from f in db.FileLinks
+                            where f.Guid.Equals(guid, StringComparison.InvariantCultureIgnoreCase)
+                            select f;
+                var fileLink = query.SingleOrDefault();
+                if (fileLink != null)
+                {
+                    HttpRuntime.Cache.Insert(cacheKey, fileLink);
+                    cache = fileLink;
+                }
+            }
+            return cache;
+        }
+
+        public ActionResult FileLink(string dir, string type)
+        {
+            var f = FileLinkFromCache(dir, type);
+            return Json(new AjaxData(f), JsonRequestBehavior.AllowGet);
+        }
+
+        private FileLink FileLinkFromCache(string dir, string type) 
+        {
+            var cacheKey = string.Format("FileController.FileLinkFromCache({0}, {1})", dir, type);
+
+            var cache = HttpRuntime.Cache[cacheKey] as FileLink;
+            if (cache == null)
+            {
+                var query = from f in db.FileLinks
+                            where f.Path.Equals(dir) && f.Type.Equals(type)
+                            select f;
+                var fileLink = query.SingleOrDefault();
+                if (fileLink == null)
+                {
+                    fileLink = new FileLink
+                    {
+                        Path = dir,
+                        Type = type,
+                        Guid = Guid.NewGuid().ToString().Replace("-", string.Empty)
+                    };
+                    db.FileLinks.Add(fileLink);
+                    db.SaveChanges();
+                }
+
+                HttpRuntime.Cache.Insert(cacheKey, fileLink);
+                cache = fileLink;
+            }
+
+            return cache;
         }
     }
 }

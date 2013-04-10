@@ -13,8 +13,8 @@ namespace A2208hub.Store.Web.Models
             : base("name=DefaultConnection")
         { }
 
-        public DbSet<User> Users { get; set; }
         public DbSet<FileLog> FileLogs { get; set; }
+        public DbSet<FileLink> FileLinks { get; set; }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {

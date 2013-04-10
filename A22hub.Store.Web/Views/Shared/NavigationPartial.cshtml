@@ -24,7 +24,8 @@
                 </li>
             </ul>
                 <div class="pull-right">
-                @if (Request.IsAuthenticated == false) {
+                @if (Request.IsAuthenticated == false && ViewBag.IsAuthenticated == null)
+                {
                     @Html.Partial("LoginFormPartial")
                 }else {
                     @Html.Partial("LoginUserStatePartial")

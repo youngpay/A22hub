@@ -2,9 +2,13 @@
     ViewBag.Title = "Store";
 }
 
-<div class="hero-unit">
-    <h1>A2208Hub.Store</h1>
-    <p>文件管理</p>
+<div class="hero-unit" style="margin-top:30px;">
+    <h1><img src="/favicon.ico" /> A2208Hub.Store</h1>
+    @if (Request.IsAuthenticated)
+    {
+    <a style="margin-left:140px;" class="btn btn-primary btn-large" href="/File">
+        <i class="icon-folder-open icon-white"></i> 文件浏览器</a>
+    }
 </div>
 @section js
 {

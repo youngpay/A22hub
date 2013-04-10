@@ -45,6 +45,13 @@
             margin-top: 5px;
             color: red;
         }
+
+        .progressnum {
+            display: inline-block;
+            float: left;
+            margin-right: 5px;
+            font-size: 14px;
+        }
     </style>
 }
 <div id="zen-page">
@@ -55,11 +62,11 @@
         <li>
             <!-- ko if: $index() < $parent.paths().length - 1 -->
             <a href="javascript:;"
-                data-bind="text: title, click:$parent.clickPath"></a>
+                data-bind="text: Title, click:$parent.clickPath"></a>
             <!-- /ko -->
             <!-- ko if: $index() + 1 == $parent.paths().length -->
             <span
-                data-bind="text: title"></span>
+                data-bind="text: Title"></span>
             <!-- /ko -->
             <span data-bind="visible: $index() + 1 < $parent.paths().length" class="divider">></span>
         </li>
@@ -73,26 +80,31 @@
                             <img class="store-icon" data-bind="attr: { src: Icon }" />
                         </a>
                         <div class="caption" style="text-align: center;">
-                            <!-- ko if:Type == 'dir' -->
+                            <!-- ko if:Type == 'dir' || Type == 'mkdir' -->
                             <b data-bind="text: Title, attr:{ title: Title }" class="inlinenobreak"></b>
                             <!-- /ko -->
                             <!-- ko if:Type == 'file' -->
-                            <b data-bind="text: Title, attr:{ title: Title + '<br />文件大小：' + Length + ' b' }" class="inlinenobreak"></b>
+                            <b data-bind="text: Title, attr:{ title: Title + '<br />文件大小：' + app.bytesFormat(Length) }" class="inlinenobreak"></b>
                             <!-- /ko -->
-                            <div class="btn-toolbar">
+                            <div class="btn-toolbar" data-bind="visible: Type != 'mkdir'">
+                                <!-- ko if:Type == 'dir' --> 
+                                <div class="btn-group">
+                                    <a href="#" data-bind="click: $parent.copylink" class="btn btn-small">复制链接</a>
                                 @if (Context.User.IsInRole("admin"))
                                 {
-                                    <!-- ko if:Type == 'dir' -->
-                                    <a href="#" class="btn btn-small" data-bind="click: $parent.delete">删除</a>
-                                    <!-- /ko -->
+                                    <a href="#" class="btn btn-small" data-bind="click: $parent.del">删除</a>   
                                 }
+                                </div>
+                                <!-- /ko -->
                                 <!-- ko if:Type == 'file' -->
                                 <div class="btn-group">
                                     <a href="#" data-bind="click: $parent.download" class="btn btn-small">下载</a>
+                                    
+                                    <a href="#" data-bind="click: $parent.copylink" class="btn btn-small">复制链接</a>
 
                                     @if (Context.User.IsInRole("admin"))
                                     {
-                                        <a href="#" class="btn btn-small" data-bind="click: $parent.delete">删除</a>
+                                        <a href="#" class="btn btn-small" data-bind="click: $parent.del">删除</a>
                                     }
                                 </div>
                                 <!-- /ko -->
@@ -100,35 +112,24 @@
                         </div>
                     </div>
                 </li>
-                <!-- ko if:$index() + 1 == $parent.dirs().length -->
-                <li class="span2" data-bind="style: { marginLeft: ($index() + 1) % 6 == 0 ? '0':'' }">
-                    <div class="thumbnail highlight">
-                        <a href="#" data-bind="click: $parent.mkdir">
-                            <img class="store-icon" src="@Url.Content("~/Content/images/store/label_new_blue.ico")" alt="新建文件夹" />
-                        </a>
-                        <div class="caption" style="text-align: center;">
-                            <b class="inlinenobreak">新建文件夹</b>
-                            <div class="btn-toolbar">
-                            </div>
-                        </div>
-                    </div>
-                </li>
-                <!-- /ko -->
             </ul>
         </div>
     </div>
 </div>
 
-<div class="uploadpanel">
+@if (User.IsInRole("admin") || User.IsInRole("user"))
+{
+    <div class="uploadpanel">
     <div id="dragView" class="uploadarea">
         <span style="display: block; margin-top: 5px; margin-bottom: 5px">拖放文件到此处上传</span>
-        <div id="uploadView" data-bind="visible: files().length > 0">
+        <div id="uploadView" style="display:none; margin-bottom:10px" data-bind="visible: files().length > 0">
             <table cellpadding="3" class="well" style="width: 100%">
                 <tbody data-bind="foreach: files">
                     <tr>
                         <td data-bind="text: name" style="text-align: left; font-size: 16px;"></td>
-                        <td style="width: 50%">
-                            <div data-bind="visible: completed() == false && failed() == false" class="progress progress-striped active" style="margin-bottom: 0px;">
+                        <td style="width: 50%" data-bind="visible: completed() == false && failed() == false">
+                            <span class="progressnum" data-bind="text: progress() + '%'"></span>
+                            <div class="progress progress-striped active" style="margin-bottom: 0px;">
                                 <div class="bar" data-bind="style: { width: progress() + '%' }"></div>
                             </div>
                         </td>
@@ -140,17 +141,27 @@
                     </tr>
                 </tbody>
             </table>
-            <button class="btn btn-success" data-bind="click: upload">上传</button>
+            <button class="btn btn-success" data-bind="click: upload">上  传</button>
         </div>
     </div>
 </div>
+}
+
 @section js
 {
     <script>
         var ICON_PATH = '@Url.Content("~/Content/images/store/")';
         var template_path = {
-            title: 'root',
-            dir: '/'
+            Title: 'root',
+            Dir: '/',
+            Link: '/',
+            Type: 'dir'
+        };
+        var new_dir = {
+            Title: '新建文件夹',
+            Dir: '/',
+            Icon: '@Url.Content("~/Content/images/store/label_new_blue.ico")',
+            Type: 'mkdir'
         };
 
         $(document.body).ready(function () {
@@ -164,25 +175,24 @@
         function fileViewModel() {
             var self = this;
 
-            self.paths = ko.observableArray([template_path]);
+            self.paths = ko.observableArray();
             self.dirs = ko.observableArray();
             self.currentDir = ko.observable();
             self.currentPath = ko.observable();
 
             self.clickPath = function (p) {
                 self.currentDir(p);
-                self.currentPath(p.dir);
-                if (window.uploadViewModel) {
-                    uploadViewModel.files.removeAll();
-                }
-                $.getJSON('/File/Dir?dirname=' + encodeURIComponent(p.dir), null, function (data) {
+                self.currentPath(p.Dir);
+                app.showLoading();
+                $.getJSON('/File/Dir?dirname=' + encodeURIComponent(p.Dir), null, function (data) {
+                    app.hideLoading();
                     var rtn = new app.ajaxData(data);
                     if (rtn.Status == 0) {
                         self.dirs.removeAll();
                         self.paths.removeAll();
                         self.paths.push(template_path);
 
-                        var links = parseDir2Url(p.dir);
+                        var links = parseDir2Url(p.Dir);
                         if (links) {
                             for (var i = 0; i < links.length; i++) {
                                 self.paths.push(links[i]);
@@ -196,6 +206,7 @@
                         for (var i = 0; i < dirs.length; i++) {
                             self.dirs.push(dirs[i]);
                         }
+                        self.dirs.push(new_dir);
                     } else {
                         app.alert(rtn.Message, '请求出错');
                     }
@@ -207,10 +218,11 @@
             }
 
             self.clickDir = function (d) {
-                self.currentDir(d);
                 if (d.Type === 'dir') {
-                    self.clickPath({ title: d.Title, dir: d.Link });
-                } else {
+                    self.clickPath({ Title: d.Title, Dir: d.Link });
+                } else if (d.Type == 'mkdir') {
+                    self.mkdir();
+                } else if (d.Type == 'file') {
                     self.preview(d);
                 }
             }
@@ -254,6 +266,23 @@
                 });
             }
 
+            self.copylink = function (d) {
+                if (d.FileLink != undefined) {
+                    showLink(d.FileLink);
+                }
+                app.showLoading();
+                $.getJSON('/File/FileLink', { dir: d.Link, type: d.Type }, function (data) {
+                    app.hideLoading();
+                    var rtn = new app.ajaxData(data);
+                    if (rtn.Status == 0) {
+                        d.FileLink = rtn.Data;
+                        showLink(d.FileLink);
+                    } else {
+                        app.alert(rtn.Message);
+                    }
+                });
+            }
+
             self.download = function (d) {
                 var link = '/File/Download?dir=' + encodeURIComponent(d.Dir + "/" + d.Title);
 
@@ -263,8 +292,9 @@
                 w.show();
             }
 
-            self.delete = function (d) {
+            self.del = function (d) {
                 app.dialog(function () {
+                    app.showLoading();
                     $.getJSON('/File/Delete', { dir: d.Link, type: d.Type }, function (data) {
                         var rtn = new app.ajaxData(data);
                         if (rtn.Status == 0) {
@@ -272,8 +302,9 @@
                         } else {
                             app.alert(rtn.Message);
                         }
-                    });
-                }, '确定要删除吗？此操作不可恢复。');
+                        app.hideLoading();
+                    })
+                }, '确定要删除吗？此操作不可恢复。')
             }
 
             self.mkdir = function () {
@@ -282,12 +313,18 @@
                 w.setContent('<div style="text-align:center; width:300px;margin:0 auto"><label class="mwindowlb" for="mwindow_mkdir_name">名称：</label><input class="mwindowname" id="mwindow_mkdir_name" type="text" /><span id="mwindow_mkdir_error"  class="mwindower" ></span></div>');
                 w.setFooter('<button class="btn" data-dismiss="modal">取消</button><button class="btn btn-primary" data-loading="创建中" onclick="mkdir(mwindow_mkdir_name.value)">创建</button>');
                 w.show();
-                $('#mwindow_mkdir_name').focus();
             }
         }
         var viewModel = new fileViewModel();
         ko.applyBindings(viewModel, $('#zen-page')[0]);
-        viewModel.clickPath({ title: 'root', dir: '/' });
+        @if (@Model != null)
+        {
+        @:viewModel.clickDir({ Title: 'root', Dir: '@Model', Link: '@Model', Type: 'dir' });
+        }
+        else
+        {
+        @:viewModel.clickDir(template_path);
+	    }
 
         function subDir(dir) {
             if (dir.length < 2) {
@@ -302,18 +339,18 @@
                 return null;
             }
             var links = [];
-            var t_dirs = t_dirs = dir.split('/');
+            var t_dirs = dir.split('/');
             for (var i = 0; i < t_dirs.length; i++) {
                 var t_dir = t_dirs.slice(0, i).join('/');
                 if (t_dir.length < 1) {
                     t_dir = t_dirs[i];
                 } else {
-                    t_dir = links[i - 1].dir + "/" + t_dirs[i];
+                    t_dir = links[i - 1].Dir + "/" + t_dirs[i];
                 }
 
                 links.push({
-                    title: t_dirs[i],
-                    dir: t_dir
+                    Title: t_dirs[i],
+                    Dir: t_dir
                 });
             }
             return links;
@@ -341,7 +378,11 @@
                 $('#mwindow_mkdir_error').text('请输入文件夹名称');
                 return;
             }
-            $.post('/File/Mkdir', 'dir=' + encodeURIComponent(viewModel.currentPath() + '/' + name), function (data) {
+            var path = viewModel.currentPath() != null ? viewModel.currentPath() + '/' : '';
+
+            app.showLoading();
+            $.post('/File/Mkdir', 'dir=' + encodeURIComponent(path + name), function (data) {
+                app.hideLoading();
                 var rtn = new app.ajaxData(data);
                 if (rtn.Status == 0) {
                     $('#myWindow').modal('hide');
@@ -351,27 +392,38 @@
                 }
             });
         }
+
+        function showLink(fileLink) {
+            var w = new app.window();
+            w.setTitle('复制链接');
+            var url = '@Html.Raw(string.Concat("http://", Request.Url.Authority, "/File/Link?id="))';
+            w.setContent('<div style="text-align:center"><code>' + url + fileLink.Guid + '</code></div>');
+            w.show();
+        }
     </script>
-
-
+    
+@if (User.IsInRole("admin") || User.IsInRole("user"))
+{
     <script>
+        // 上传部分 文件模型
         function fileModel(name, total) {
             var self = this;
             this.state = null;
             self.name = ko.observable(name);
             self.loaded = ko.observable(0);
-            self.total = ko.observable(total);
+            self.total = ko.observable(total || 0);
             self.failed = ko.observable(false);
             self.error = ko.observable();
-            self.uploaded = ko.observable(false);
 
             self.progress = ko.computed(function () {
                 return Math.round(self.loaded() / self.total() * 100);
             })
             self.completed = ko.computed(function () {
-                return self.uploaded() && !self.failed() && self.total() === self.loaded();
+                return !self.failed() && self.total() === self.loaded();
             })
         }
+
+        // 上传部分 视图模型
         function UploadViewModel() {
             var self = this;
 
@@ -380,33 +432,38 @@
                 self.files.remove(d);
             }
 
-            self.upload = function () {
-                var fs = self.files()
-                for (var i = 0; i < fs.length; i++) {
-                    uploadFile(fs[i]);
-                }
-            }
+            self.upload = uploadFile;
         }
+
+        // 初始化视图模型，绑定
         var uploadViewModel = new UploadViewModel();
         ko.applyBindings(uploadViewModel, $('#uploadView')[0]);
 
 
-        dragView.addEventListener('dragenter', function (e) {
-            e.stopPropagation();
-            e.preventDefault();
-        }, false);
+        // 拖拽文件
+        $(dragView).on('dragenter', function () {
+            if (event.preventDefault) {
+                event.stopPropagation();
+                event.preventDefault();
+            }
+        });
 
-        dragView.addEventListener('dragover', function (e) {
-            e.stopPropagation();
-            e.preventDefault();
-        }, false);
+        $(dragView).on('dragover', function () {
+            if (event.preventDefault) {
+                event.stopPropagation();
+                event.preventDefault();
+            }
+        });
 
-        dragView.addEventListener('drop', function (e) {
-            e.stopPropagation();
-            e.preventDefault();
-            dropHandle(e);
-        }, false);
+        $(dragView).on('drop', function () {
+            if (event.preventDefault) {
+                event.stopPropagation();
+                event.preventDefault();
+            }
+            dropHandle(event);
+        });
 
+        // 获取拖拽的文件，添加到文件列表中
         function dropHandle(e) {
 
             var filelist = e.dataTransfer.files;
@@ -417,97 +474,130 @@
 
             for (var i = 0; i < filelist.length; i++) {
                 var file = filelist[i];
-                var f = new fileModel(file.name, file.length);
+                var f = new fileModel(file.name, file.size);
+                // 保存 File 引用
                 f.state = file;
                 uploadViewModel.files.push(f);
             }
         }
-
+        
+        // 上传文件
         function uploadFile(f) {
+            var fs = uploadViewModel.files();
+            app.showLoading('正在上传，请稍候');
+            for (var i = 0; i < fs.length; i++) {
 
-            //var reader = new FileReader();
-            //f.reader = reader;
+                // 上传之前将进度设为0
+                fs[i].loaded(0);
 
-            //reader.onload = sendToServer;
-
-            //reader.readAsArrayBuffer();
-
-            var filePath = f.name();
-            if (viewModel.currentPath().length > 1) {
-                filePath = viewModel.currentPath() + '/' + filePath;
+                // 执行上传
+                checkFileUpload(fs[i]);
             }
-
-            var form = new FormData();
-            form.append('file', f.state);
-            form.append('path', filePath);
-
-            var xhr = new XMLHttpRequest();
-            xhr.open('POST', '/File/Upload');
-
-            xhr.onprogress = function (evt) {
-                if (evt.lengthComputable) {
-                    f.loaded(evt.loaded);
-                    f.total(evt.total);
-                }
-            };
-
-            xhr.onload = function () {
-                var s = eval('(' + xhr.responseText + ')');
-                if (s.Status == 0) {
-                    f.uploaded(true);
-                    viewModel.refresh();
-                } else {
-                    f.failed(true);
-                    f.error(s.Message);
-                }
-            }
-            xhr.send(form);
-
         }
 
-        function sendToServer(evt) {
-            var base64 = this.result;
-            var reader = evt.target;
-            var f = findByReader(reader);
-            if (f == null) {
-                return;
-            }
-
+        // 先检查文件是否存在，如果存在则询问是否覆盖
+        function checkFileUpload(f) {
             var filePath = f.name();
             if (viewModel.currentPath().length > 1) {
                 filePath = viewModel.currentPath() + '/' + filePath;
             }
-            $.post('/File/Upload', 'base64=' + encodeURIComponent(base64) + '&file=' + encodeURIComponent(filePath), function (data) {
+
+            // 发送请求检查文件是否存在
+            $.getJSON('/File/Exists', { dir: filePath }, function (data) {
                 var rtn = new app.ajaxData(data);
                 if (rtn.Status == 0) {
-                    f.uploaded(true);
-                    viewModel.refresh();
+                    if (rtn.Data == 1) { // 文件存在，询问
+                        app.dialog(function () {
+                            // 如果选择“是”，执行上传
+                            sendToServer(f);
+                        }, '此文件已存在，是否覆盖？');
+                    } else { // 不存在，直接上传
+                        sendToServer(f);
+                    }
                 } else {
                     f.failed(true);
                     f.error(rtn.Message);
                 }
             });
         }
-        function updateProgress(evt) {
-            var f = findByReader(evt.target);
-            if (f == null) {
-                return;
-            }
-            if (evt.lengthComputable) {
-                f.loaded(evt.loaded);
-                f.total(evt.total);
+
+        // 上传文件操作
+        function sendToServer(f) {
+            // 获取 File 引用
+            var blob = f.state;
+            // 设置 buffer 大小
+            var bytes_per_chunk = 1024 * 1024;
+            // 获得文件总大小
+            var size = blob.size;
+            f.total(size);
+
+            var start = 0;
+            var end = bytes_per_chunk;
+            var chunk;
+
+            // 将文件分段上传
+            while (start < size) {
+                // 任何地方出错，跳出
+                if (f.failed()) {
+                    break;
+                }
+                if (end > size) {
+                    end = size;
+                }
+                // 切割文件
+                chunk = blob.slice(start, end);
+                // 分段上传
+                chunkUpload(chunk, f, start);
+                start = end;
+                end = start + bytes_per_chunk;
             }
         }
-        function findByReader(reader) {
-            var f = null;
-            uploadViewModel.files().forEach(function (v, i) {
-                if (v.reader == reader) {
-                    f = v;
-                    return;
+
+        // 分段上传
+        function chunkUpload(blob, f, uploaded) {
+            var filePath = f.name();
+            if (viewModel.currentPath().length > 1) {
+                filePath = viewModel.currentPath() + '/' + filePath;
+            }
+            // 初始化 xhr 对象
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/File/Upload', true);
+
+            // 要服务器响应的是 json 格式
+            xhr.setRequestHeader('Accept', 'application/json');
+
+            // 设置路径
+            xhr.setRequestHeader('X-File-Path', encodeURIComponent(filePath));
+
+            // 设置流的 Position，提供给服务器合并文件用
+            xhr.setRequestHeader('X-File-Position', uploaded);
+
+            // 设置文件总大小，提供给服务器合并文件用
+            xhr.setRequestHeader('X-File-Size', f.state.size);
+
+            xhr.onload = function () {
+                var s = eval('(' + xhr.responseText + ')');
+                var rtn = new app.ajaxData(s);
+                if (rtn.Status == 0) {
+                    // 完成此段上传之后更新进度
+                    f.loaded(f.loaded() + blob.size);
+                    if (rtn.Data == 'done') {
+                        uploadViewModel.files.remove(f);
+                        if (uploadViewModel.files().length == 0) {
+                            app.hideLoading();
+                        }
+                        // 文件上传完成，刷新目录
+                        viewModel.refresh();
+                    }
+                } else {
+                    // 出错则标记错误，跳出循环，显示错误消息
+                    f.failed(true);
+                    f.error(rtn.Message);
                 }
-            });
-            return f;
+            }
+            xhr.send(blob);
         }
 
     </script>
+}
 }
